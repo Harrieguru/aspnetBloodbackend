@@ -4,11 +4,10 @@ using webAPI.Models;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
 builder.Services.AddControllers();
-
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
 //dependency injection of donationdb context
 builder.Services.AddDbContext<DonationDBContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DevConnection")));
@@ -26,16 +25,22 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+// Docker configuration - ensure this is outside any environment checks
+app.Urls.Add("http://0.0.0.0:80");
+
+// Configure Swagger - remove the environment check to always enable Swagger
+app.UseSwagger();
+app.UseSwaggerUI(c =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Your API V1");
+    // Set Swagger as the default page
+    c.RoutePrefix = string.Empty;
+});
+
+// CORS should be enabled before Authorization
 app.UseCors("AllowAll");
 
 app.UseAuthorization();
-
 app.MapControllers();
 
 app.Run();
